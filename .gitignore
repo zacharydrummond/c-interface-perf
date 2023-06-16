@@ -1,0 +1,11 @@
+# Project-related.
+/_build
+a.out
+
+# C-related.
+*.o
+*.d
+*.gch
+
+# Vim-related.
+*.swp
