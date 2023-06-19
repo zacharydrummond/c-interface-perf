@@ -26,7 +26,7 @@ xoshiro256p_random(const struct rand_interface *const *const restrict rand)
 
 	// Calculate random result.
 	uint64_t *state = self->state;
-	const uint64_t result = s[0] + s[3];
+	const uint64_t result = state[0] + state[3];
 
 	// Update State.
 	const uint64_t t = state[1] << 17;
