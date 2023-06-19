@@ -3,6 +3,7 @@
 #include <xoshiro256p_rand.h>
 #include <xoshiro256ss_rand.h>
 // Libc includes.
+#include <inttypes.h>
 #define _XOPEN_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
@@ -38,6 +39,7 @@ loop_array_of_rand_interfaces(size_t n_interfaces, const struct rand_interface *
 		clock_t start_time, end_time;
 		start_time = clock();
 
+		// Critical loop.
 		for (size_t idx = 0; idx < N_ITER; idx++) {
 			result_ = rand_random(rand_array[idx]);
 		}
@@ -45,7 +47,7 @@ loop_array_of_rand_interfaces(size_t n_interfaces, const struct rand_interface *
 		end_time = clock();
 		double run_usecs = (double)(end_time - start_time) * 1e6 / CLOCKS_PER_SEC;
 
-		printf("%.15f\n", run_usecs);
+		printf("%.0f\n", run_usecs);
 	}
 
 	*result = result_;
@@ -71,6 +73,7 @@ int main(void)
 
 	long seed = time(NULL);
 	srand48(seed++);
+	printf("test\t\tusec\n");
 
 	struct xoshiro256ss_rand *xoshiro256ss_rands[N_XOSHIRO256SS] = {0};
 	for (size_t idx = 0; idx < N_XOSHIRO256SS; idx++) {
@@ -90,20 +93,47 @@ int main(void)
 		}
 	}
 
-	const struct rand_interface *const *rands[N_XOSHIRO256SS + N_XOSHIRO256P] = {0};
-	for (size_t idx = 0; idx < N_XOSHIRO256SS; idx++) rands[idx] = xoshiro256ss_rand_as_interface(xoshiro256ss_rands[idx]);
-	for (size_t idx = 0; idx < N_XOSHIRO256P; idx++) rands[idx + N_XOSHIRO256SS] = xoshiro256p_rand_as_interface(xoshiro256p_rands[idx]);
-
-	printf("test_1\t");
 	uint64_t test_1_result = 0;
-	int test_1_status = loop_array_of_rand_interfaces(sizeof rands / sizeof rands[0], rands, &test_1_result);
-	if (test_1_status == EXIT_FAILURE) {
-		fprintf(stderr, "%s: error encountered while running test 1.\n", __func__);
-		goto test_1_error;
+	{ // Looping over many of a mix of rand_interface implementations.
+		const struct rand_interface *const *rands[N_XOSHIRO256SS + N_XOSHIRO256P] = {0};
+		for (size_t idx = 0; idx < N_XOSHIRO256SS; idx++) rands[idx] = xoshiro256ss_rand_as_interface(xoshiro256ss_rands[idx]);
+		for (size_t idx = 0; idx < N_XOSHIRO256P; idx++) rands[idx + N_XOSHIRO256SS] = xoshiro256p_rand_as_interface(xoshiro256p_rands[idx]);
+
+		printf("test_1\t\t");
+		int test_1_status = loop_array_of_rand_interfaces(sizeof rands / sizeof rands[0], rands, &test_1_result);
+		if (test_1_status == EXIT_FAILURE) {
+			fprintf(stderr, "%s: error encountered while running test 1.\n", __func__);
+			goto test_1_error;
+		}
 	}
+
+	uint64_t test_2_result = 0;
+	{ // Looping over many of a single rand_interface implementation.
+		const struct rand_interface *const *rands[N_XOSHIRO256SS] = {0};
+		for (size_t idx = 0; idx < N_XOSHIRO256SS; idx++) rands[idx] = xoshiro256ss_rand_as_interface(xoshiro256ss_rands[idx]);
+
+		printf("test_2\t\t");
+		int test_2_status = loop_array_of_rand_interfaces(sizeof rands / sizeof rands[0], rands, &test_2_result);
+		if (test_2_status == EXIT_FAILURE) {
+			fprintf(stderr, "%s: error encountered while running test 2.\n", __func__);
+			goto test_2_error;
+		}
+	}
+
+	uint64_t test_3_result = 0;
+	{
+	}
+
+	uint64_t test_4_result = 0;
+	{
+	}
+
+	uint64_t test_result_aggregate = test_1_result & test_2_result | test_3_result | test_4_result;
+	printf("\ntest aggregate: %"PRIu64"\n", test_result_aggregate);
 
 	app_status = EXIT_SUCCESS;
 
+test_2_error:
 test_1_error:
 xoshiro256p_rand_create_error:
 	for (size_t idx = 0; idx < N_XOSHIRO256P; idx++) xoshiro256p_rand_destroy(xoshiro256p_rands[idx]);
