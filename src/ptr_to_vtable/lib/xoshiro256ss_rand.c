@@ -2,11 +2,14 @@
 #include <xoshiro256ss_rand.h>
 #include <rand_interface.h>
 #include "containerof.h"
+#include "rand_utils.h"
 // Libc includes.
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+// ``xoshiro256ss`` implementation is a modified version of the one found here:
+// https://en.wikipedia.org/wiki/Xorshift
 
 
 struct xoshiro256ss_rand {

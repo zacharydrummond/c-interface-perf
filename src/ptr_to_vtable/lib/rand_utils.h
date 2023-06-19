@@ -1,5 +1,7 @@
 #ifndef __RAND_UTILS_H__
 #define __RAND_UTILS_H__
+// ``rol64`` and ``splitmix64`` are modified versions from those found here:
+// https://en.wikipedia.org/wiki/Xorshift
 
 
 #include <stdint.h>

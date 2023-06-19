@@ -2,11 +2,11 @@
 #include "rand_utils.h"
 
 
-// Declarations for inline functions to ensure symbol is emitted if inlining fails.
-inline
+// Declarations for inline functions to ensure symbol is emitted if inlining
+// fails. Parameter names omitted to prevent issues with macros. See "Modern C"
+// by Jens Gustedt for more details on best practice for inline functions.
 uint64_t
-rol64(const uint64_t __rol64_x, const int __rol64_k);
+rol64(const uint64_t, const int);
 
-inline
 uint64_t
-splitmix64(uint64_t *const __splitmix64_state);
+splitmix64(uint64_t *const);
