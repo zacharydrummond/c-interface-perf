@@ -15,13 +15,6 @@ struct xoshiro256ss_rand {
 };
 
 
-static inline
-uint64_t
-rol64(const uint64_t x, const int k)
-{
-	return (x << k) | (x >> (64 - k));
-}
-
 static
 uint64_t
 xoshiro256ss_random(const struct rand_interface *const *const restrict rand)
@@ -45,20 +38,10 @@ xoshiro256ss_random(const struct rand_interface *const *const restrict rand)
 }
 
 static
-const struct rand_interface xoshiro256ss_rand_interface = {
+const struct rand_interface
+xoshiro256ss_rand_interface = {
     .random = xoshiro256ss_random
 };
-
-static
-uint64_t
-splitmix64(uint64_t *state)
-{
-	*state += 0x9E3779B97f4A7C15;
-	uint64_t out = *state;
-	out = (out ^ (out >> 30)) * 0xBF58476D1CE4E5B9;
-	out = (out ^ (out >> 27)) * 0x94D049BB133111EB;
-	return out;
-}
 
 struct xoshiro256ss_rand *
 xoshiro256ss_rand_create(uint64_t seed)
@@ -72,13 +55,13 @@ xoshiro256ss_rand_create(uint64_t seed)
 	if (!xoshiro256ss_rand) {
 		fprintf(stderr, "%s: Could not allocate %zu bytes for an instance of ``struct xoshiro256ss_rand``.\n", __func__, sizeof *xoshiro256ss_rand);
 		goto xoshiro256ss_rand_malloc_error;
-	} else {
-		struct xoshiro256ss_rand xoshiro256ss_rand_init = {
-			.rand = &xoshiro256ss_rand_interface,
-			.state = {0}
-		};
-		memcpy(xoshiro256ss_rand, &xoshiro256ss_rand_init, sizeof *xoshiro256ss_rand);
 	}
+
+	struct xoshiro256ss_rand xoshiro256ss_rand_init = {
+		.rand = &xoshiro256ss_rand_interface,
+		.state = {0}
+	};
+	memcpy(xoshiro256ss_rand, &xoshiro256ss_rand_init, sizeof *xoshiro256ss_rand);
 
 	// Initialize state array with splitmix64 algorithm.
 	for (size_t idx = 0; idx < (sizeof xoshiro256ss_rand->state / sizeof xoshiro256ss_rand->state[0]); idx++) {
