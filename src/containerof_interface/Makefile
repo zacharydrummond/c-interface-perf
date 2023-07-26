@@ -1,57 +1,63 @@
-# Configuration.
+# Project configuration.
+TARGET_NAME := containerof_interface
+INC_DIRS := ./inc
+BIN_DIRS := ./bin
+LIB_DIRS := ./lib
+
+# Build-profile configuration.
 B ?= debug
+override BUILD_PROFILES := debug profile release
 _BUILD_DIR ?= ./_build
 
-# Error checking.
-override __empty :=
-override __space := $(__empty) $(__empty)
+# Build-profile error checking.
 override B := $(strip $(B))
 
-ifeq (,$(filter debug profile release,$(B)))
-$(error Unknown B=$(B). Should be one of: B=debug, B=profile, or B=release)
-
-else ifeq ($(__space),$(findstring $(__space),$(B)))
-$(error Cannot specify multiple space-separated options for B; B=$(B) given)
-
+ifeq (,$(filter $(BUILD_PROFILES),$(B)))
+$(error Unknown B="$(B)"; should be one of: { $(patsubst %,"%",$(BUILD_PROFILES)) })
 endif
 
-# Project-related defines.
-override TARGET_NAME := containerof_interface
+override __empty :=
+override __space := $(__empty) $(__empty)
 
-INC_DIRS := ./inc
+ifeq ($(__space),$(findstring $(__space),$(B)))
+$(error Cannot specify multiple space-separated options for B; B="$(B)" given)
+endif
 
-BIN_DIRS := ./bin
-BIN_SRCS := $(shell find $(BIN_DIRS) -name '*.c')
-BIN_OBJS := $(BIN_SRCS:%.c=$(_BUILD_DIR)/$(B)/%.o)
-
-LIB_DIRS := ./lib
-LIB_SRCS := $(shell find $(LIB_DIRS) -name '*.c')
-LIB_OBJS := $(LIB_SRCS:%.c=$(_BUILD_DIR)/$(B)/%.o)
-
-OBJS := $(BIN_OBJS) $(LIB_OBJS)
-DEPS := $(OBJS:.o=.d)
+# C-specific configuration.
+ifeq (release,$(B))
+OPTFLAGS := -Ofast -flto
+LDFLAGS += -s
+else ifeq (profile,$(B))
+OPTFLAGS := -Ofast -flto -g3
+else # debug
+OPTFLAGS := -fdebug-prefix-map=..=$$(readlink -f ..) -O0 -g3
+endif
 
 LDLIBS := -lm
 CPPFLAGS := -MMD -MP
 CFLAGS := --std=c11 -Wall -Wextra -Wpedantic
 override CFLAGS += $(addprefix -I,$(INC_DIRS))
 
-$(_BUILD_DIR)/$(TARGET_NAME): $(_BUILD_DIR)/$(B)/$(TARGET_NAME)
-	cp -RP $< $(@D)
+# Static configuration.
+override FINAL_TARGET := $(_BUILD_DIR)/$(TARGET_NAME)
+override BUILD_TARGET := $(_BUILD_DIR)/$(B)/$(TARGET_NAME)
 
-$(_BUILD_DIR)/debug/$(TARGET_NAME): override OPTFLAGS := -fdebug-prefix-map=..=$$(readlink -f ..) -O0 -g3
-$(_BUILD_DIR)/debug/$(TARGET_NAME): $(OBJS)
+override BIN_SRCS := $(shell find $(BIN_DIRS) -name '*.c')
+override BIN_OBJS := $(BIN_SRCS:%.c=$(_BUILD_DIR)/$(B)/%.o)
+
+override LIB_SRCS := $(shell find $(LIB_DIRS) -name '*.c')
+override LIB_OBJS := $(LIB_SRCS:%.c=$(_BUILD_DIR)/$(B)/%.o)
+
+override OBJS := $(BIN_OBJS) $(LIB_OBJS)
+override DEPS := $(OBJS:.o=.d)
+
+# Targets.
+.PHONY: $(FINAL_TARGET)
+$(FINAL_TARGET): $(BUILD_TARGET)
 	@mkdir -p $(@D)
-	$(CC) $(OPTFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o $@
+	cp $< $@
 
-$(_BUILD_DIR)/profile/$(TARGET_NAME): override OPTFLAGS := -Ofast -flto -g3
-$(_BUILD_DIR)/profile/$(TARGET_NAME): $(OBJS)
-	@mkdir -p $(@D)
-	$(CC) $(OPTFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o $@
-
-$(_BUILD_DIR)/release/$(TARGET_NAME): override OPTFLAGS := -Ofast -flto
-$(_BUILD_DIR)/release/$(TARGET_NAME): override LDFLAGS += -s
-$(_BUILD_DIR)/release/$(TARGET_NAME): $(OBJS)
+$(BUILD_TARGET): $(OBJS)
 	@mkdir -p $(@D)
 	$(CC) $(OPTFLAGS) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
