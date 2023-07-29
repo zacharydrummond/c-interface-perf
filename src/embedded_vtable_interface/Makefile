@@ -1,5 +1,5 @@
 # Project configuration.
-TARGET_NAME := containerof_interface
+TARGET_NAME := embedded_vtable_interface
 INC_DIRS := ./src/inc
 BIN_DIRS := ./src/bin
 LIB_DIRS := ./src/lib

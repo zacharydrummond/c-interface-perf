@@ -1,5 +1,5 @@
 # Project configuration.
-TARGET_NAME := containerof_interface
+TARGET_NAME := fat_pointer_interface
 INC_DIRS := ./src/inc
 BIN_DIRS := ./src/bin
 LIB_DIRS := ./src/lib
