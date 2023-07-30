@@ -4,7 +4,6 @@
 #include <xoshiro256ss_rand.h>
 // Libc includes.
 #include <inttypes.h>
-#define _XOPEN_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>

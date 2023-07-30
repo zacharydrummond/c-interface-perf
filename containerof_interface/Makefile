@@ -35,6 +35,7 @@ endif
 
 LDLIBS := -lm
 CPPFLAGS := -MMD -MP
+override CPPFLAGS += -D=_GNU_SOURCE
 CFLAGS := --std=c11 -Wall -Wextra -Wpedantic
 override CFLAGS += $(addprefix -I,$(INC_DIRS))
 
@@ -64,6 +65,11 @@ $(BUILD_TARGET): $(OBJS)
 $(OBJS): $(_BUILD_DIR)/$(B)/%.o: %.c
 	@mkdir -p $(@D)
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(OPTFLAGS) $< -o $@
+
+.PHONY: run
+run: $(FINAL_TARGET)
+	$(info Running "$(TARGET_NAME)" benchmark...)
+	@stdbuf -o0 $(FINAL_TARGET) | head -n 5
 
 .PHONY: clean
 clean:
